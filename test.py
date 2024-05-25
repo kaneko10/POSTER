@@ -114,6 +114,10 @@ def test(dataset, conversion, reclasses, conversion_rules, image_size, record):
     # 間接推定用
     conv_pre_labels = []
     conv_gt_labels = []
+
+    p_i = 0
+    n_i = 0
+
     with torch.no_grad():
         bingo_cnt = 0
         # 間接推定用
@@ -144,7 +148,7 @@ def test(dataset, conversion, reclasses, conversion_rules, image_size, record):
 
             if record:
                 if conversion:
-                    record_pred_emotion(dataset, test_dataset.classes, predicts, conv_predicts, paths, reclasses, conversion_rules)
+                    p_i, n_i = record_pred_emotion(dataset, test_dataset.classes, predicts, conv_predicts, paths, reclasses, conversion_rules, p_i, n_i)
 
         acc = bingo_cnt.float() / float(test_size)
         acc = np.around(acc.numpy(), 4)
@@ -260,7 +264,7 @@ def label_conversion(predict, reclasses, conversion_rules):
             conv_class_index = reclasses.index(conv_class_name)
             return conv_class_name, conv_class_index
 
-def record_pred_emotion(dataset, classes, predicts, conv_predicts, paths, reclasses, conversion_rules):
+def record_pred_emotion(dataset, classes, predicts, conv_predicts, paths, reclasses, conversion_rules, p_i, n_i):
     predicts = predicts.tolist()
     conv_predicts = conv_predicts.tolist()
 
@@ -276,9 +280,6 @@ def record_pred_emotion(dataset, classes, predicts, conv_predicts, paths, reclas
         with open(csv_file_path, 'w', newline='') as csvfile:
             csvwriter = csv.writer(csvfile)
             csvwriter.writerow(header)
-        
-    p_i = 0
-    n_i = 0
 
     for i in range(len(image_names)):
 		# 黒画像か判断
@@ -304,13 +305,15 @@ def record_pred_emotion(dataset, classes, predicts, conv_predicts, paths, reclas
         write_to_csv(csv_file_path, [image_names[i], predict_class_name, conversion_class_name, p_i, n_i, f_i])
         
     print("CSVファイルに書き込みました。")
+    return p_i, n_i
 
 def main():
     '''
 	指定したデータセットのテスト
 	'''
     args = parse_args()
-    dataset = "FER+"
+    start_time = time.time()
+    dataset = "test2_imanishi"
     # image_size = 48
     image_size = 224    # デフォルト
     conversion = True       # ラベル変換を行うか
@@ -327,6 +330,9 @@ def main():
         ('Happiness', 'Positive'),
         ('Surprise', 'Surprise')]
     test(dataset, conversion, reclasses, conversion_rules, image_size, record)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print("Execution time:", execution_time, "seconds")
 
 if __name__ == "__main__":                    
     main()
