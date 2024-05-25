@@ -18,6 +18,7 @@ class SequenceDataset(data.Dataset):
         img_paths = []
         img_names = []
         print(self.classes)
+        print("path: ", self.root_dir)
         for img_name in os.listdir(self.root_dir):
             if not img_name.startswith('.'):  # 隠しファイルを無視
                 img_names.append(img_name)

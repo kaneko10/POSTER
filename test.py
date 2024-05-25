@@ -131,8 +131,8 @@ def test(dataset, conversion, reclasses, conversion_rules, image_size, record):
             targets = targets.to(torch.device('cpu'))
             _, predicts = torch.max(outputs, 1)
             _, predicts = torch.max(outputs, 1)
-            print(f"予測: {predicts}")
-            print(f"正解: {targets}")
+            # print(f"予測: {predicts}")
+            # print(f"正解: {targets}")
             correct_or_not = torch.eq(predicts, targets)
             bingo_cnt += correct_or_not.sum().cpu()
             pre_labels += predicts.cpu().tolist()
@@ -153,7 +153,7 @@ def test(dataset, conversion, reclasses, conversion_rules, image_size, record):
         acc = bingo_cnt.float() / float(test_size)
         acc = np.around(acc.numpy(), 4)
         print(f"Test accuracy: {acc:.4f}.")
-        print(pre_labels)
+        # print(pre_labels)
         cm = confusion_matrix(gt_labels, pre_labels)
         # print(cm)
 
@@ -161,7 +161,7 @@ def test(dataset, conversion, reclasses, conversion_rules, image_size, record):
             conv_acc = conv_bingo_cnt.float() / float(test_size)
             conv_acc = np.around(conv_acc.numpy(), 4)
             print(f"Test accuracy: {conv_acc:.4f}.")
-            print(conv_pre_labels)
+            # print(conv_pre_labels)
             conv_cm = confusion_matrix(conv_gt_labels, conv_pre_labels)
 
     if args.plot_cm:
@@ -312,24 +312,28 @@ def main():
 	指定したデータセットのテスト
 	'''
     args = parse_args()
+    subfolders = get_subfolders("data/Sequence")
+    print(subfolders)
     start_time = time.time()
-    dataset = "test2_imanishi"
-    # image_size = 48
-    image_size = 224    # デフォルト
-    conversion = True       # ラベル変換を行うか
-    record = False          # csvに記録するか
-    if args.dataset == "sequence":
-        record = True
-    reclasses = ['Negative', 'Neutral', 'Positive', 'Surprise']
-    conversion_rules = [
-        ('Anger', 'Negative'), 
-        ('Disgust', 'Negative'), 
-        ('Fear', 'Negative'),
-        ('Sadness', 'Negative'),
-        ('Neutral', 'Neutral'),
-        ('Happiness', 'Positive'),
-        ('Surprise', 'Surprise')]
-    test(dataset, conversion, reclasses, conversion_rules, image_size, record)
+    for subfolder in subfolders:
+        print("dataset: ", subfolder)
+        dataset = subfolder
+        # image_size = 48
+        image_size = 224    # デフォルト
+        conversion = True       # ラベル変換を行うか
+        record = False          # csvに記録するか
+        if args.dataset == "sequence":
+            record = True
+        reclasses = ['Negative', 'Neutral', 'Positive', 'Surprise']
+        conversion_rules = [
+            ('Anger', 'Negative'), 
+            ('Disgust', 'Negative'), 
+            ('Fear', 'Negative'),
+            ('Sadness', 'Negative'),
+            ('Neutral', 'Neutral'),
+            ('Happiness', 'Positive'),
+            ('Surprise', 'Surprise')]
+        test(dataset, conversion, reclasses, conversion_rules, image_size, record)
     end_time = time.time()
     execution_time = end_time - start_time
     print("Execution time:", execution_time, "seconds")
