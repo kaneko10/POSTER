@@ -25,7 +25,7 @@ class SequenceDataset(data.Dataset):
         sorted_image_names = sorted(img_names, key=lambda x: int(re.search(r'\d+', x).group()))
         for img_name in sorted_image_names:
             img_path = os.path.join(self.root_dir, img_name)
-            print("image: ", img_name)
+            # print("image: ", img_name)
             if os.path.isfile(img_path) and not img_name.startswith('.'):  # ファイルのみを対象とし、隠しファイルを無視
                 img_paths.append((img_path, -1))    # ラベルはないので、仮で-1に設定
         return img_paths
