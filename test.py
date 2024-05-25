@@ -10,6 +10,7 @@ from data_preprocessing.dataset_raf import RafDataSet
 from data_preprocessing.dataset_affectnet import Affectdataset
 from data_preprocessing.dataset_affectnet_8class import Affectdataset_8class
 from data_preprocessing.dataset_custom import CustomDataset
+from data_preprocessing.dataset_sequece import SequenceDataset
 
 from utils import *
 from models.emotion_hyp import pyramid_trans_expr
@@ -72,10 +73,17 @@ def test(dataset, conversion, reclasses, conversion_rules, image_size, record):
         model = pyramid_trans_expr(img_size=224, num_classes=num_classes, type=args.modeltype)
 
     elif args.dataset == "custom":
-        print("実行")
+        print("dataset: ", dataset)
         datapath = f'./data/Custom/{dataset}'
         num_classes = 7
         test_dataset = CustomDataset(datapath, transform=data_transforms_test)
+        model = pyramid_trans_expr(img_size=image_size, num_classes=num_classes, type=args.modeltype)
+
+    elif args.dataset == "sequence":
+        print("dataset: ", dataset)
+        datapath = f'./data/Sequence/{dataset}'
+        num_classes = 7
+        test_dataset = SequenceDataset(datapath, transform=data_transforms_test)
         model = pyramid_trans_expr(img_size=image_size, num_classes=num_classes, type=args.modeltype)
 
     else:
@@ -265,7 +273,7 @@ def record_pred_emotion(dataset, classes, predicts, conv_predicts, paths, reclas
         file_name = os.path.basename(path)
         image_names.append(file_name)
 
-    csv_file_path = f'csv/{dataset}.csv'
+    csv_file_path = f'csv/seq_{dataset}.csv'
 
     if not os.path.exists(csv_file_path):
         header = ["Image", "Emotion_ind", "Emotion", "P_i", "N_i", "F_i"]
@@ -305,11 +313,14 @@ def main():
     '''
 	指定したデータセットのテスト
 	'''
+    args = parse_args()
     dataset = "FER+"
-    image_size = 48
-    # image_size = 224    # デフォルト
+    # image_size = 48
+    image_size = 224    # デフォルト
     conversion = True       # ラベル変換を行うか
-    record = True           # csvに記録するか
+    record = False          # csvに記録するか
+    if args.dataset == "sequence":
+        record = True
     reclasses = ['Negative', 'Neutral', 'Positive', 'Surprise']
     conversion_rules = [
         ('Anger', 'Negative'), 
@@ -320,30 +331,6 @@ def main():
         ('Happiness', 'Positive'),
         ('Surprise', 'Surprise')]
     test(dataset, conversion, reclasses, conversion_rules, image_size, record)
-
-    '''
-	個別の感情変化を記録（間接推定）
-	'''
-    # dir = "face_jpg"
-    # subfolders = get_subfolders(dir)
-    # start_time = time.time()
-    # model_name = "model_checkpoint_FER+_org_rs_3000_ind_s48x48_b32_e100"
-    # classes = ['anger', 'disgust', 'fear', 'sadness','neutral', 'positive']
-    # conversion_rules = [
-    #     ('NaN', 'NaN'),
-    #     ('anger', 'negative'), 
-    #     ('disgust', 'negative'), 
-    #     ('fear', 'negative'),
-    #     ('sadness', 'negative'),
-    #     ('neutral', 'neutral'),
-    #     ('positive', 'positive'),
-    #     ]
-    # for subfolder in subfolders:
-    #     record_pred_emotion_individual_ind(dir, subfolder, model_name, classes, conversion_rules)
-
-    # end_time = time.time()
-    # execution_time = end_time - start_time
-    # print("Execution time:", execution_time, "seconds")
 
 if __name__ == "__main__":                    
     main()
