@@ -216,7 +216,7 @@ def write_to_csv(csv_path, data):
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(data)
 
-def is_black_image_by_filesize(image_path, threshold_kb=1):
+def is_black_image_by_filesize(image_path, threshold_kb=2):
     """
     与えられた画像が真っ黒の画像かどうかを判定する（ファイルサイズを利用）
     threshold_kbは真っ黒の画像と見なす最大ファイルサイズ（KB）
@@ -285,14 +285,14 @@ def record_pred_emotion(dataset, classes, predicts, conv_predicts, paths, reclas
     n_i = 0
 
     for i in range(len(image_names)):
-		# # 黒画像か判断
-        # image_path = f'./data/Custom/{dataset}/{image_name}'
-        # is_black = is_black_image_by_filesize(image_path)
-        # if is_black:
-        #     predict_class_name = "NaN"
-        # else:
-        predict_class_name = classes[predicts[i]] 
-        conversion_class_name, _ = label_conversion(predict_class_name, reclasses, conversion_rules)
+		# 黒画像か判断
+        image_path = f'data/Sequence/{dataset}/{image_names[i]}'
+        is_black = is_black_image_by_filesize(image_path)
+        if is_black:
+            predict_class_name = "NaN"
+        else:
+            predict_class_name = classes[predicts[i]] 
+            conversion_class_name, _ = label_conversion(predict_class_name, reclasses, conversion_rules)
 
         if conversion_class_name == "Negative":
             n_i += 1
