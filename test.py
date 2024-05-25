@@ -142,10 +142,6 @@ def test(dataset, conversion, reclasses, conversion_rules, image_size, record):
                 conv_pre_labels += conv_predicts.cpu().tolist()
                 conv_gt_labels += conv_targets.cpu().tolist()
 
-            for path in paths:
-                file_name = os.path.basename(path)
-                print(file_name)
-
             if record:
                 if conversion:
                     record_pred_emotion(dataset, test_dataset.classes, predicts, conv_predicts, paths, reclasses, conversion_rules)
