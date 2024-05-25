@@ -1,3 +1,5 @@
 .DS_Store
 *.pth
 *.tar
+data/
+Confusion_matrix/
