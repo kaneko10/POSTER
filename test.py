@@ -128,7 +128,7 @@ def test(dataset, conversion, reclasses, conversion_rules, image_size, record):
 
             # ラベルを間接推定に変換
             if conversion:
-                conv_predicts, conv_targets = label_conversion(predicts, targets, test_dataset.classes, reclasses, conversion_rules)
+                conv_predicts, conv_targets = label_list_conversion(predicts, targets, test_dataset.classes, reclasses, conversion_rules)
                 conv_correct_or_not = torch.eq(conv_predicts, conv_targets)
                 conv_bingo_cnt += conv_correct_or_not.sum().cpu()
                 conv_pre_labels += conv_predicts.cpu().tolist()
@@ -138,9 +138,9 @@ def test(dataset, conversion, reclasses, conversion_rules, image_size, record):
                 file_name = os.path.basename(path)
                 print(file_name)
 
-            # if record:
-            #     if conversion:
-            #         record_pred_emotion(predicts, conv_predicts, paths, reclasses, conversion_rules)
+            if record:
+                if conversion:
+                    record_pred_emotion(dataset, test_dataset.classes, predicts, conv_predicts, paths, reclasses, conversion_rules)
 
         acc = bingo_cnt.float() / float(test_size)
         acc = np.around(acc.numpy(), 4)
@@ -203,7 +203,30 @@ def is_image_filename(filename):
     image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif']  # 画像の拡張子リスト
     return any(filename.lower().endswith(ext) for ext in image_extensions)
 
-def label_conversion(predicts, targets, classes, reclasses, conversion_rules):
+def write_to_csv(csv_path, data):
+    with open(csv_path, 'a', newline='') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(data)
+
+def is_black_image_by_filesize(image_path, threshold_kb=1):
+    """
+    与えられた画像が真っ黒の画像かどうかを判定する（ファイルサイズを利用）
+    threshold_kbは真っ黒の画像と見なす最大ファイルサイズ（KB）
+    """
+    # 画像ファイルのサイズを取得（バイト単位）
+    file_size = os.path.getsize(image_path)
+    
+    # バイト単位からKB単位に変換
+    file_size_kb = file_size / 1024
+    # print(file_size_kb)
+    
+    # ファイルサイズが閾値以下であれば真っ黒の画像と判定
+    if file_size_kb <= threshold_kb:
+        return True
+    else:
+        return False
+
+def label_list_conversion(predicts, targets, classes, reclasses, conversion_rules):
     predicts = predicts.tolist()
     targets = targets.tolist()
     conv_predicts = []
@@ -226,64 +249,57 @@ def label_conversion(predicts, targets, classes, reclasses, conversion_rules):
     
     return torch.tensor(conv_predicts), torch.tensor(conv_targets)
 
-# def record_pred_emotion(predicts, conv_predicts, paths, reclasses, conversion_rules):
-    # image_names = []
-    # for path in paths:
-    #     file_name = os.path.basename(path)
-    #     image_names.append(file_name)
-	# # 数字の部分を抜き出してソート
-	# sorted_image_names = sorted(image_names, key=lambda x: int(re.search(r'\d+', x).group()))
-	# print(sorted_image_names)
+def label_conversion(predict, reclasses, conversion_rules):
+    for rule in conversion_rules:
+        if rule[0] == predict:
+            conv_class_name = rule[1]
+            conv_class_index = reclasses.index(conv_class_name)
+            return conv_class_name, conv_class_index
 
-	# del image_names
+def record_pred_emotion(dataset, classes, predicts, conv_predicts, paths, reclasses, conversion_rules):
+    predicts = predicts.tolist()
+    conv_predicts = conv_predicts.tolist()
 
-	# # csvに書き込みたいデータ
-	# header = ["Image", "Emotion_ind", "Emotion", "P_i", "N_i", "F_i"]
- 
-	# p_i = 0
-	# n_i = 0
+    image_names = []
+    for path in paths:
+        file_name = os.path.basename(path)
+        image_names.append(file_name)
 
-	# csv_file_path = f'csv/output_emotion/{folder_name}_{model_name}.csv'
-	# # CSVファイルに書き込む
-	# with open(csv_file_path, 'w', newline='') as csvfile:
-	# 	csvwriter = csv.writer(csvfile)
-	# 	csvwriter.writerow(header)
+    csv_file_path = f'csv/{dataset}.csv'
 
-	# model_path = f"{model_name}.h5"
-	# model = load_model(model_path)
+    if not os.path.exists(csv_file_path):
+        header = ["Image", "Emotion_ind", "Emotion", "P_i", "N_i", "F_i"]
+        with open(csv_file_path, 'w', newline='') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow(header)
+        
+    p_i = 0
+    n_i = 0
 
-	# for image_name in sorted_image_names:
-	# 	# CNNで感情予測
-	# 	image_path = f"{dir}/{folder_name}/{image_name}"
-	# 	# 黒画像か判断
-	# 	is_black = is_black_image_by_filesize(image_path)
-	# 	if is_black:
-	# 		predicted_class = "NaN"
-	# 	else:
-	# 		predicted_class = test(image_path, model, classes)
+    for i in range(len(image_names)):
+		# # 黒画像か判断
+        # image_path = f'./data/Custom/{dataset}/{image_name}'
+        # is_black = is_black_image_by_filesize(image_path)
+        # if is_black:
+        #     predict_class_name = "NaN"
+        # else:
+        predict_class_name = classes[predicts[i]] 
+        conversion_class_name, _ = label_conversion(predict_class_name, reclasses, conversion_rules)
 
-	# 	conversion_class_name = ""
-	# 	for rule in conversion_rules:
-	# 		if rule[0] == predicted_class:
-	# 			conversion_class_name = rule[1]
-	# 			break
+        if conversion_class_name == "Negative":
+            n_i += 1
+        elif conversion_class_name == "Positive":
+            p_i += 1
 
-	# 	if conversion_class_name == "negative":
-	# 		n_i += 1
-	# 	elif conversion_class_name == "positive":
-	# 		p_i += 1
+        log = 2 * p_i + n_i
+        if log <= 0:
+            f_i = 0
+        else:
+            f_i = math.log(log)
 
-	# 	log = 2 * p_i + n_i
-	# 	if log <= 0:
-	# 		f_i = 0
-	# 	else:
-	# 		f_i = math.log(log)
-		
-	# 	with open(csv_file_path, 'a', newline='') as csvfile:
-	# 		csvwriter = csv.writer(csvfile)
-	# 		csvwriter.writerow([image_name, predicted_class, conversion_class_name, p_i, n_i, f_i])
-
-	# print("CSVファイルに書き込みました。")
+        write_to_csv(csv_file_path, [image_names[i], predict_class_name, conversion_class_name, p_i, n_i, f_i])
+        
+    print("CSVファイルに書き込みました。")
 
 def main():
     '''
@@ -293,7 +309,7 @@ def main():
     image_size = 48
     # image_size = 224    # デフォルト
     conversion = True       # ラベル変換を行うか
-    record = False           # csvに記録するか
+    record = True           # csvに記録するか
     reclasses = ['Negative', 'Neutral', 'Positive', 'Surprise']
     conversion_rules = [
         ('Anger', 'Negative'), 
