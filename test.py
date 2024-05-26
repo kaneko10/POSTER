@@ -287,6 +287,7 @@ def record_pred_emotion(dataset, classes, predicts, conv_predicts, paths, reclas
         is_black = is_black_image_by_filesize(image_path)
         if is_black:
             predict_class_name = "NaN"
+            conversion_class_name = "NaN"
         else:
             predict_class_name = classes[predicts[i]] 
             conversion_class_name, _ = label_conversion(predict_class_name, reclasses, conversion_rules)
