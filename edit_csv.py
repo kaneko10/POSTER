@@ -176,9 +176,9 @@ def record_fi_from_csv(csv_file_path, filename, start_frame):
 	n_i = 0
 	for index in range(len(images)):
 		emotion = emotions[index]
-		if emotion == "negative":
+		if emotion == "Negative":
 			n_i += 1
-		elif emotion == "positive":
+		elif emotion == "Positive":
 			p_i += 1
 
 		log = 2 * p_i + n_i
