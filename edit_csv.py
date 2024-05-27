@@ -347,6 +347,11 @@ def main():
 	# for filename in csv_files:
 	# 	# filename = "rclass_test4_morita.csv"
 	# 	csv_file_path = f"{dir}/{filename}"
+	# # row = "F_i"
+	# # min = 0
+	# # max = 9
+	# # step = 1
+	
 	# 	row = "W_i"
 	# 	min = 0
 	# 	max = 9
