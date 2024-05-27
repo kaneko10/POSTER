@@ -273,7 +273,7 @@ def record_pred_emotion(dataset, classes, predicts, conv_predicts, paths, reclas
         file_name = os.path.basename(path)
         image_names.append(file_name)
 
-    csv_file_path = f'csv/seq_{dataset}.csv'
+    csv_file_path = f'csv/output/seq_{dataset}.csv'
 
     if not os.path.exists(csv_file_path):
         header = ["Image", "Emotion_ind", "Emotion", "P_i", "N_i", "F_i"]
