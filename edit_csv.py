@@ -190,7 +190,7 @@ def record_fi_from_csv(csv_file_path, filename, start_frame):
 		write_to_csv(output_csv_path, [images[index], emotion, p_i, n_i, f_i])
 
 def draw_graph_emotion_individual(csv_file_path, left, right):
-	emotion_values = ["NaN", "neutral", "negative", "positive"]	# y軸の順番を決めるためのダミーデータ
+	emotion_values = ["NaN", "Surprise", "Negative", "Neutral", "Positive"]	# y軸の順番を決めるためのダミーデータ
 	with open(csv_file_path, 'r') as file:
 		# csv.DictReaderオブジェクトを作成
 		csv_reader = csv.DictReader(file)
@@ -204,7 +204,7 @@ def draw_graph_emotion_individual(csv_file_path, left, right):
 	x = []				# x軸の値
 	y = emotion_values	# y軸の値
 	for i in range(len(emotion_values)):
-		x.append(i-4)
+		x.append(i-5)
 
 	# 新しい図（Figure）を作成し、横幅を調整
 	plt.figure(figsize=(15, 5))
@@ -310,7 +310,7 @@ def main():
 	for filename in csv_files:
 		csv_file_path = f"{dir}/{filename}"
 		left = 0
-		right = 11000
+		right = 3600    # 練習の動画(test2)
 		draw_graph_emotion_individual(csv_file_path, left, right)
 
 	'''
