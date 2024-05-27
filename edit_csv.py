@@ -311,6 +311,7 @@ def main():
 		csv_file_path = f"{dir}/{filename}"
 		left = 0
 		right = 3600    # 練習の動画(test2)
+		# right = 12000    # 本番の動画(test4)
 		draw_graph_emotion_individual(csv_file_path, left, right)
 
 	'''
@@ -360,6 +361,11 @@ def main():
 	# dir = "csv/input"
 	# csv_files = glob.glob(os.path.join(dir, '*.csv'))
 	# csv_files = [os.path.basename(file) for file in csv_files]
+	# # row = "F_i"
+	# # min = 0
+	# # max = 9
+	# # step = 1
+    
 	# row = "W_i"
 	# min = 0
 	# max = 0.5
