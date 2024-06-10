@@ -7,10 +7,11 @@ import os
 import re
 
 class SequenceDataset(data.Dataset):
-    def __init__(self, root_dir, transform=None):
+    def __init__(self, root_dir, classes, transform=None):
         self.root_dir = root_dir
         self.transform = transform
-        self.classes = ['Surprise', 'Fear', 'Disgust', 'Happiness', 'Sadness', 'Anger', 'Neutral']  # RAF-DBの場合
+        # self.classes = ['Surprise', 'Fear', 'Disgust', 'Happiness', 'Sadness', 'Anger', 'Neutral']  # RAF-DBの場合
+        self.classes = classes
         self.class_to_idx = {cls: i for i, cls in enumerate(self.classes)}
         self.img_paths = self._get_img_paths()
         

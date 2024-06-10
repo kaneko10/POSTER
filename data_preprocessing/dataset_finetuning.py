@@ -28,12 +28,14 @@ class FinetuningDataset(data.Dataset):
             if not os.path.isdir(cls_dir):
                 continue
             for img_name in os.listdir(cls_dir):
-                img_names.append(img_name)
+                if not img_name.startswith('.'):  # 隠しファイルを無視
+                    img_names.append(img_name)
             # 数字の部分を抜き出してソート
             sorted_image_names = sorted(img_names, key=lambda x: int(re.search(r'\d+', x).group()))
+            print("size:", len(sorted_image_names))
             for img_name in sorted_image_names:
                 img_path = os.path.join(cls_dir, img_name)
-                print("image: ", img_name)
+                # print("image: ", img_name)
                 if os.path.isfile(img_path) and not img_name.startswith('.'):  # ファイルのみを対象とし、隠しファイルを無視
                     img_paths.append((img_path, self.class_to_idx[cls]))
         return img_paths

@@ -9,12 +9,13 @@ import re
 class CustomDataset(data.Dataset):
     # 0:Surprise, 1:Fear, 2:Disgust, 3:Happiness, 4:Sadness, 5:Anger, 6:Neutral（RAF-DB）
     # 0:Surprise, 1:Fear, 2:Disgust, 3:Happiness, 4:Sadness, 5:Anger, 6:Neutral（AffectNet）
-    def __init__(self, root_dir, transform=None):
+    def __init__(self, root_dir, classes, transform=None):
         self.root_dir = root_dir
         self.transform = transform
         # self.classes = sorted(os.listdir(root_dir))
         # self.classes = sorted([d for d in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, d))])
-        self.classes = ['Surprise', 'Fear', 'Disgust', 'Happiness', 'Sadness', 'Anger', 'Neutral']  # RAF-DBの場合
+        # self.classes = ['Surprise', 'Fear', 'Disgust', 'Happiness', 'Sadness', 'Anger', 'Neutral']  # RAF-DBの場合
+        self.classes = classes
         # self.classes = ['Neutral', 'Happiness', 'Sadness', 'Surprise', 'Fear', 'Disgust', 'Anger']  # AffectNetの場合、違うかも
         self.class_to_idx = {cls: i for i, cls in enumerate(self.classes)}
         self.img_paths = self._get_img_paths()
@@ -29,12 +30,13 @@ class CustomDataset(data.Dataset):
             if not os.path.isdir(cls_dir):
                 continue
             for img_name in os.listdir(cls_dir):
-                img_names.append(img_name)
+                if not img_name.startswith('.'):  # 隠しファイルを無視
+                    img_names.append(img_name)
             # 数字の部分を抜き出してソート
             sorted_image_names = sorted(img_names, key=lambda x: int(re.search(r'\d+', x).group()))
             for img_name in sorted_image_names:
                 img_path = os.path.join(cls_dir, img_name)
-                print("image: ", img_name)
+                # print("image: ", img_name)
                 if os.path.isfile(img_path) and not img_name.startswith('.'):  # ファイルのみを対象とし、隠しファイルを無視
                     img_paths.append((img_path, self.class_to_idx[cls]))
         return img_paths

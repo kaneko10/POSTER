@@ -32,7 +32,7 @@ def parse_args():
     parser.add_argument('-p', '--plot_cm', action="store_true", help="Ploting confusion matrix.")
     return parser.parse_args()
 
-def test(dataset, conversion, reclasses, conversion_rules, image_size, record):
+def test(dataset, conversion, classes, reclasses, conversion_rules, image_size, record):
     args = parse_args()
     # M1 MacではGPUが利用できないので、CUDA設定を削除
     # os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
@@ -75,15 +75,17 @@ def test(dataset, conversion, reclasses, conversion_rules, image_size, record):
     elif args.dataset == "custom":
         print("dataset: ", dataset)
         datapath = f'./data/Custom/{dataset}'
-        num_classes = 7
-        test_dataset = CustomDataset(datapath, transform=data_transforms_test)
+        # num_classes = 7
+        num_classes = len(classes)
+        test_dataset = CustomDataset(datapath, classes=classes, transform=data_transforms_test)
         model = pyramid_trans_expr(img_size=image_size, num_classes=num_classes, type=args.modeltype)
 
     elif args.dataset == "sequence":
         print("dataset: ", dataset)
         datapath = f'./data/Sequence/{dataset}'
-        num_classes = 7
-        test_dataset = SequenceDataset(datapath, transform=data_transforms_test)
+        # num_classes = 7
+        num_classes = len(classes)
+        test_dataset = SequenceDataset(datapath, classes=classes, transform=data_transforms_test)
         model = pyramid_trans_expr(img_size=image_size, num_classes=num_classes, type=args.modeltype)
 
     else:
@@ -182,8 +184,11 @@ def test(dataset, conversion, reclasses, conversion_rules, image_size, record):
             plot_confusion_matrix(cm, labels_name, 'AffectNet_8class', acc)
 
         if args.dataset == "custom":
-            labels_name = ['SU', 'FE', 'DI', 'HA', 'SA', 'AN', "NE"]  # RAF-DBの場合
-            # labels_name = ['NE', 'HA', 'SA', 'SU', 'FE', 'DI', "AN"]  #　AffectNetの場合、違うかも
+            if len(classes) == 7:
+                labels_name = ['SU', 'FE', 'DI', 'HA', 'SA', 'AN', "NE"]  # RAF-DBの場合
+                # labels_name = ['NE', 'HA', 'SA', 'SU', 'FE', 'DI', "AN"]  #　AffectNetの場合、違うかも
+            else:
+                labels_name = ['NE', 'NEU', 'PO', 'SU']
             plot_confusion_matrix(cm, labels_name, 'custom', acc)
 
             if conversion:
@@ -312,6 +317,26 @@ def main():
     '''
 	指定したデータセットのテスト
 	'''
+    # dataset = "Kaneko_v2"
+    # image_size = 224    # デフォルト
+    # conversion = False   # ラベル変換を行うか
+    # record = False      # csvに記録するか
+    # classes = ['Negative', 'Neutral', 'Positive', 'Surprise']
+    # # classes = ['Surprise', 'Fear', 'Disgust', 'Happiness', 'Sadness', 'Anger', 'Neutral']
+    # reclasses = ['Negative', 'Neutral', 'Positive', 'Surprise']
+    # conversion_rules = [
+    #     ('Anger', 'Negative'), 
+    #     ('Disgust', 'Negative'), 
+    #     ('Fear', 'Negative'),
+    #     ('Sadness', 'Negative'),
+    #     ('Neutral', 'Neutral'),
+    #     ('Happiness', 'Positive'),
+    #     ('Surprise', 'Surprise')]
+    # test(dataset, conversion, classes, reclasses, conversion_rules, image_size, record)
+
+    '''
+	シーケンス画像のテスト
+	'''
     args = parse_args()
     subfolders = get_subfolders("data/Sequence")
     print(subfolders)
@@ -325,16 +350,23 @@ def main():
         record = False          # csvに記録するか
         if args.dataset == "sequence":
             record = True
+        # classes = ['Surprise', 'Fear', 'Disgust', 'Happiness', 'Sadness', 'Anger', 'Neutral']
+        classes = ['Negative', 'Neutral', 'Positive', 'Surprise']
         reclasses = ['Negative', 'Neutral', 'Positive', 'Surprise']
+        # conversion_rules = [
+        #     ('Anger', 'Negative'), 
+        #     ('Disgust', 'Negative'), 
+        #     ('Fear', 'Negative'),
+        #     ('Sadness', 'Negative'),
+        #     ('Neutral', 'Neutral'),
+        #     ('Happiness', 'Positive'),
+        #     ('Surprise', 'Surprise')]
         conversion_rules = [
-            ('Anger', 'Negative'), 
-            ('Disgust', 'Negative'), 
-            ('Fear', 'Negative'),
-            ('Sadness', 'Negative'),
+            ('Negative', 'Negative'), 
             ('Neutral', 'Neutral'),
-            ('Happiness', 'Positive'),
+            ('Positive', 'Positive'),
             ('Surprise', 'Surprise')]
-        test(dataset, conversion, reclasses, conversion_rules, image_size, record)
+        test(dataset, conversion, classes, reclasses, conversion_rules, image_size, record)
     end_time = time.time()
     execution_time = end_time - start_time
     print("Execution time:", execution_time, "seconds")

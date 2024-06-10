@@ -41,7 +41,8 @@ def finetuning(dataset, image_size, epochs):
     data_transforms = transforms.Compose([
         # transforms.ToPILImage(),
         transforms.RandomHorizontalFlip(),
-        transforms.Resize((224, 224)),
+        # transforms.Resize((224, 224)),
+        transforms.Resize((image_size, image_size)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         transforms.RandomErasing(scale=(0.02, 0.1)),
@@ -49,7 +50,8 @@ def finetuning(dataset, image_size, epochs):
 
     data_transforms_val = transforms.Compose([
         # transforms.ToPILImage(),
-        transforms.Resize((224, 224)),
+        # transforms.Resize((224, 224)),
+        transforms.Resize((image_size, image_size)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 
@@ -120,8 +122,7 @@ def finetuning(dataset, image_size, epochs):
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
 
-    for epoch in range(epochs):
-        epoch += 1
+    for epoch in range(1, epochs + 1):
         print('Epoch {}/{}'.format(epoch, epochs))
         print('-' * 10)
 
@@ -269,12 +270,12 @@ def set_parameter_requires_grad(model, feature_extracting):
             param.requires_grad = False
 
 def main():
-    start_time = time.time()
-    dataset = "SFEW"
+    start_time = time()
+    dataset = "Kaneko_v2"
     image_size = 224
-    epochs = 10
+    epochs = 200
     finetuning(dataset, image_size, epochs)
-    end_time = time.time()
+    end_time = time()
     execution_time = end_time - start_time
     print("Execution time:", execution_time, "seconds")
 
