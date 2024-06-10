@@ -131,6 +131,7 @@ def test(dataset, conversion, classes, reclasses, conversion_rules, image_size, 
             # 画像とターゲットをCPUに移動
             outputs, features = model(imgs.to(torch.device('cpu')))
             targets = targets.to(torch.device('cpu'))
+            # print("outputs:", outputs)
             _, predicts = torch.max(outputs, 1)
             _, predicts = torch.max(outputs, 1)
             # print(f"予測: {predicts}")
@@ -150,7 +151,7 @@ def test(dataset, conversion, classes, reclasses, conversion_rules, image_size, 
 
             if record:
                 if conversion:
-                    p_i, n_i = record_pred_emotion(dataset, test_dataset.classes, predicts, conv_predicts, paths, reclasses, conversion_rules, p_i, n_i)
+                    p_i, n_i = record_pred_emotion(dataset, test_dataset.classes, outputs, predicts, conv_predicts, paths, reclasses, conversion_rules, p_i, n_i)
 
         acc = bingo_cnt.float() / float(test_size)
         acc = np.around(acc.numpy(), 4)
@@ -269,9 +270,10 @@ def label_conversion(predict, reclasses, conversion_rules):
             conv_class_index = reclasses.index(conv_class_name)
             return conv_class_name, conv_class_index
 
-def record_pred_emotion(dataset, classes, predicts, conv_predicts, paths, reclasses, conversion_rules, p_i, n_i):
+def record_pred_emotion(dataset, classes, outputs, predicts, conv_predicts, paths, reclasses, conversion_rules, p_i, n_i):
     predicts = predicts.tolist()
     conv_predicts = conv_predicts.tolist()
+    outputs = outputs.tolist()
 
     image_names = []
     for path in paths:
@@ -282,6 +284,8 @@ def record_pred_emotion(dataset, classes, predicts, conv_predicts, paths, reclas
 
     if not os.path.exists(csv_file_path):
         header = ["Image", "Emotion_ind", "Emotion", "P_i", "N_i", "F_i"]
+        for class_name in classes:
+            header.append(f"logits_{class_name}")
         with open(csv_file_path, 'w', newline='') as csvfile:
             csvwriter = csv.writer(csvfile)
             csvwriter.writerow(header)
@@ -308,7 +312,11 @@ def record_pred_emotion(dataset, classes, predicts, conv_predicts, paths, reclas
         else:
             f_i = math.log(log)
 
-        write_to_csv(csv_file_path, [image_names[i], predict_class_name, conversion_class_name, p_i, n_i, f_i])
+        data = [image_names[i], predict_class_name, conversion_class_name, p_i, n_i, f_i]
+        for logit in outputs[i]:
+            data.append(logit)
+
+        write_to_csv(csv_file_path, data)
         
     print("CSVファイルに書き込みました。")
     return p_i, n_i
