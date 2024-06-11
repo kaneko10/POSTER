@@ -228,7 +228,7 @@ def draw_graph_emotion_individual(csv_file_path, left, right, step_x):
     # グラフを表示
     plt.show()
 
-def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x, step_y, left, right, softmax):
+def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x, step_y, left, right, softmax, difference):
     plt.figure(figsize=(15, 5))
 	
     if softmax:
@@ -253,25 +253,34 @@ def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x
             probabilities = probabilities.tolist()
             for j in range(len(classes)):
                 probabilities_all[j].append(probabilities[j] * 100)
-				
-        for i, class_name in enumerate(classes):
+        if difference:
+            differences = []
+            for i in range(int(row_num)):
+                probability_1 = probabilities_all[0][i]
+                probability_2 = probabilities_all[1][i]
+                differences.append(probability_1 - probability_2)
             x = []
-            y = probabilities_all[i]
+            y = differences
             for i in range(len(logit)):
                 x.append(i)
-            # グラフの描画
-            if class_name=='Positive':
-				# 青
-                plt.plot(x, y, color='#1f77b4', label=class_name, alpha=0.5, linewidth=0.5)
-            elif class_name=='Negative':
-				# 赤
-                plt.plot(x, y, color='#d62728', label=class_name, alpha=0.5, linewidth=0.5)
-            elif class_name=='Neutral':
-				# 緑
-                plt.plot(x, y, color='#2ca02c', label=class_name, alpha=0.5, linewidth=0.5)
-            elif class_name=='Surprise':
-				# オレンジ
-                plt.plot(x, y, color='#ff7f0e', label=class_name, alpha=0.5, linewidth=0.5)
+            plt.plot(x, y, color='#1f77b4', linewidth=0.5) # 青
+            plt.axhspan(0, max, facecolor='#d62728', alpha=0.3)
+            plt.axhspan(min, 0, facecolor='lightgreen', alpha=0.5)
+        else:
+            for i, class_name in enumerate(classes):
+                x = []
+                y = probabilities_all[i]
+                for i in range(len(logit)):
+                    x.append(i)
+                # グラフの描画
+                if class_name=='Positive':
+                    plt.plot(x, y, color='#1f77b4', label=class_name, alpha=0.5, linewidth=0.5) # 青
+                elif class_name=='Negative':
+                    plt.plot(x, y, color='#d62728', label=class_name, alpha=0.5, linewidth=0.5) # 赤
+                elif class_name=='Neutral':
+                    plt.plot(x, y, color='#2ca02c', label=class_name, alpha=0.5, linewidth=0.5) # 緑
+                elif class_name=='Surprise':
+                    plt.plot(x, y, color='#ff7f0e', label=class_name, alpha=0.5, linewidth=0.5) # オレンジ
     else:
         for class_name in classes:
             logit = []
@@ -286,21 +295,20 @@ def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x
             # グラフの描画
             # plt.plot(x, y, label=class_name, alpha=0.5, linewidth=0.5)
             if class_name=='Positive':
-				# 青
-                plt.plot(x, y, color='#1f77b4', label=class_name, alpha=0.5, linewidth=0.5)
+                plt.plot(x, y, color='#1f77b4', label=class_name, alpha=0.5, linewidth=0.5) # 青
             elif class_name=='Negative':
-				# 赤
-                plt.plot(x, y, color='#d62728', label=class_name, alpha=0.5, linewidth=0.5)
+                plt.plot(x, y, color='#d62728', label=class_name, alpha=0.5, linewidth=0.5) # 赤
             elif class_name=='Neutral':
-				# 緑
-                plt.plot(x, y, color='#2ca02c', label=class_name, alpha=0.5, linewidth=0.5)
+                plt.plot(x, y, color='#2ca02c', label=class_name, alpha=0.5, linewidth=0.5) # 緑
             elif class_name=='Surprise':
-				# オレンジ
-                plt.plot(x, y, color='#ff7f0e', label=class_name, alpha=0.5, linewidth=0.5)
+                plt.plot(x, y, color='#ff7f0e', label=class_name, alpha=0.5, linewidth=0.5) # オレンジ
 
     plt.title(f"{csv_file_path}")  # グラフのタイトル
     plt.xlabel('Frame')            # x軸のラベル
-    plt.ylabel('Probability[%]')            # y軸のラベル
+    if difference:
+        plt.ylabel('Difference[%]')            # y軸のラベル
+    else:
+        plt.ylabel('Probability[%]')            # y軸のラベル
 
     # plt.ylim(min, max)  # y軸の最小値と最大値を指定
     plt.ylim(min, max)
@@ -414,7 +422,8 @@ def main():
     dir = "csv/input"
     csv_files = glob.glob(os.path.join(dir, '*.csv'))
     csv_files = [os.path.basename(file) for file in csv_files]
-    classes = ['Positive', 'Surprise', 'Negative', 'Neutral']
+    # classes = ['Positive', 'Surprise', 'Negative', 'Neutral']
+    classes = ['Negative', 'Neutral']
     min = -3
     max = 3
     step_y = 1
@@ -422,14 +431,19 @@ def main():
     right = 3500    # 練習の動画(test2)
     # right = 12000    # 本番の動画(test4)
     step_x = 200
-    softmax = True
+    softmax = True  # ソフトマックス関数（確率）に変換するか
+    difference = True   # 確率の差で表示するか
     if softmax:
         min = 0
         max = 100
         step_y = 10
+    if difference:
+        min = -100
+        max = 100
+        step_y = 10
     for filename in csv_files:
         csv_file_path = f"{dir}/{filename}"
-        draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x, step_y, left, right, softmax)
+        draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x, step_y, left, right, softmax, difference)
 
     '''
     csvファイルから開始行を指定してf_iを計算
