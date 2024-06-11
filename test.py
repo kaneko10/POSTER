@@ -285,7 +285,7 @@ def record_pred_emotion(dataset, classes, outputs, predicts, conv_predicts, path
     if not os.path.exists(csv_file_path):
         header = ["Image", "Emotion_ind", "Emotion", "P_i", "N_i", "F_i"]
         for class_name in classes:
-            header.append(f"logits_{class_name}")
+            header.append(f"logit_{class_name}")
         with open(csv_file_path, 'w', newline='') as csvfile:
             csvwriter = csv.writer(csvfile)
             csvwriter.writerow(header)
