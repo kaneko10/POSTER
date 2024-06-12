@@ -231,27 +231,22 @@ def draw_graph_emotion_individual(csv_file_path, left, right, step_x):
 def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x, step_y, left, right, difference):
     plt.figure(figsize=(15, 5))
 	
-    logits_all = []
     probabilities_all = []
     row_num = 0
     for class_name in classes:
-        logit = []
         probabilities_all.append([])
-        with open(csv_file_path, 'r') as file:
-            csv_reader = csv.DictReader(file)
-            for row in csv_reader:
-                logit.append(float(row[f'logit_{class_name}']))
-                row_num += 1
-            logits_all.append(logit)
-    row_num /= len(classes)
-    for i in range(int(row_num)):
-        logits = []
-        for j in range(len(classes)):
-            logits.append(logits_all[j][i])
-        probabilities = F.softmax(torch.tensor(logits), dim=0)  # ロジットをソフトマックス関数で変換（0〜1の確率）
-        probabilities = probabilities.tolist()
-        for j in range(len(classes)):
-            probabilities_all[j].append(probabilities[j] * 100)
+        
+    with open(csv_file_path, 'r') as file:
+        csv_reader = csv.DictReader(file)
+        for row in csv_reader:
+            row_num += 1
+            logits = []
+            for class_name in classes:
+                logits.append(float(row[f'logit_{class_name}']))
+            probabilities = F.softmax(torch.tensor(logits), dim=0)  # ロジットをソフトマックス関数で変換（0〜1の確率）
+            probabilities = probabilities.tolist()
+            for j in range(len(classes)):
+                probabilities_all[j].append(probabilities[j] * 100)
     if difference:
         differences = []
         for i in range(int(row_num)):
@@ -260,7 +255,7 @@ def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x
             differences.append(probability_1 - probability_2)
         x = []
         y = differences
-        for i in range(len(logit)):
+        for i in range(int(row_num)):
             x.append(i)
         plt.plot(x, y, color='#1f77b4', linewidth=0.5) # 青
         plt.axhspan(0, max, facecolor='#d62728', alpha=0.3)
@@ -269,8 +264,8 @@ def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x
         for i, class_name in enumerate(classes):
             x = []
             y = probabilities_all[i]
-            for i in range(len(logit)):
-                x.append(i)
+            for j in range(int(row_num)):
+                x.append(j)
             # グラフの描画
             if class_name=='Positive':
                 plt.plot(x, y, color='#1f77b4', label=class_name, alpha=0.5, linewidth=0.5) # 青
