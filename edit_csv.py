@@ -283,19 +283,11 @@ def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x
     else:
         plt.ylabel('Probability[%]')            # y軸のラベル
 
-    # plt.ylim(min, max)  # y軸の最小値と最大値を指定
+    plt.xticks(range(left, right+step_x, step_x))   # x軸の最小値と最大値を設定
     plt.ylim(min, max)
-    plt.yticks(np.arange(min, max+step_y, step=step_y))
-    # 目盛り線
-    plt.grid(axis='y', color = "gray", linestyle="--")
-    # 凡例
-    # plt.legend()
-    plt.legend(loc='upper left', fontsize='small', labelspacing=0.5, framealpha=0.5)
-
-    # x軸の最小値を設定
-    # plt.xlim(left=left)  # x軸の最小値を指定
-    # plt.xlim(right=right)
-    plt.xticks(range(left, right+step_x, step_x))
+    plt.yticks(np.arange(min, max+step_y, step=step_y)) # y軸の最小値と最大値を指定
+    plt.grid(axis='y', color = "gray", linestyle="--")  # 目盛り線
+    plt.legend(loc='upper left', fontsize='small', labelspacing=0.5, framealpha=0.5)    # 凡例
 
     # グラフを表示
     plt.show()
