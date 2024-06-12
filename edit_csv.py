@@ -228,72 +228,50 @@ def draw_graph_emotion_individual(csv_file_path, left, right, step_x):
     # グラフを表示
     plt.show()
 
-def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x, step_y, left, right, softmax, difference):
+def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x, step_y, left, right, difference):
     plt.figure(figsize=(15, 5))
 	
-    if softmax:
-        logits_all = []
-        probabilities_all = []
-        row_num = 0
-        for class_name in classes:
-            logit = []
-            probabilities_all.append([])
-            with open(csv_file_path, 'r') as file:
-                csv_reader = csv.DictReader(file)
-                for row in csv_reader:
-                    logit.append(float(row[f'logit_{class_name}']))
-                    row_num += 1
-                logits_all.append(logit)
-        row_num /= len(classes)
+    logits_all = []
+    probabilities_all = []
+    row_num = 0
+    for class_name in classes:
+        logit = []
+        probabilities_all.append([])
+        with open(csv_file_path, 'r') as file:
+            csv_reader = csv.DictReader(file)
+            for row in csv_reader:
+                logit.append(float(row[f'logit_{class_name}']))
+                row_num += 1
+            logits_all.append(logit)
+    row_num /= len(classes)
+    for i in range(int(row_num)):
+        logits = []
+        for j in range(len(classes)):
+            logits.append(logits_all[j][i])
+        probabilities = F.softmax(torch.tensor(logits), dim=0)  # ロジットをソフトマックス関数で変換（0〜1の確率）
+        probabilities = probabilities.tolist()
+        for j in range(len(classes)):
+            probabilities_all[j].append(probabilities[j] * 100)
+    if difference:
+        differences = []
         for i in range(int(row_num)):
-            logits = []
-            for j in range(len(classes)):
-                logits.append(logits_all[j][i])
-            probabilities = F.softmax(torch.tensor(logits), dim=0)
-            probabilities = probabilities.tolist()
-            for j in range(len(classes)):
-                probabilities_all[j].append(probabilities[j] * 100)
-        if difference:
-            differences = []
-            for i in range(int(row_num)):
-                probability_1 = probabilities_all[0][i]
-                probability_2 = probabilities_all[1][i]
-                differences.append(probability_1 - probability_2)
-            x = []
-            y = differences
-            for i in range(len(logit)):
-                x.append(i)
-            plt.plot(x, y, color='#1f77b4', linewidth=0.5) # 青
-            plt.axhspan(0, max, facecolor='#d62728', alpha=0.3)
-            plt.axhspan(min, 0, facecolor='lightgreen', alpha=0.5)
-        else:
-            for i, class_name in enumerate(classes):
-                x = []
-                y = probabilities_all[i]
-                for i in range(len(logit)):
-                    x.append(i)
-                # グラフの描画
-                if class_name=='Positive':
-                    plt.plot(x, y, color='#1f77b4', label=class_name, alpha=0.5, linewidth=0.5) # 青
-                elif class_name=='Negative':
-                    plt.plot(x, y, color='#d62728', label=class_name, alpha=0.5, linewidth=0.5) # 赤
-                elif class_name=='Neutral':
-                    plt.plot(x, y, color='#2ca02c', label=class_name, alpha=0.5, linewidth=0.5) # 緑
-                elif class_name=='Surprise':
-                    plt.plot(x, y, color='#ff7f0e', label=class_name, alpha=0.5, linewidth=0.5) # オレンジ
+            probability_1 = probabilities_all[0][i]
+            probability_2 = probabilities_all[1][i]
+            differences.append(probability_1 - probability_2)
+        x = []
+        y = differences
+        for i in range(len(logit)):
+            x.append(i)
+        plt.plot(x, y, color='#1f77b4', linewidth=0.5) # 青
+        plt.axhspan(0, max, facecolor='#d62728', alpha=0.3)
+        plt.axhspan(min, 0, facecolor='lightgreen', alpha=0.5)
     else:
-        for class_name in classes:
-            logit = []
-            with open(csv_file_path, 'r') as file:
-                csv_reader = csv.DictReader(file)
-                for row in csv_reader:
-                    logit.append(float(row[f'logit_{class_name}']))
+        for i, class_name in enumerate(classes):
             x = []
-            y = logit
+            y = probabilities_all[i]
             for i in range(len(logit)):
                 x.append(i)
             # グラフの描画
-            # plt.plot(x, y, label=class_name, alpha=0.5, linewidth=0.5)
             if class_name=='Positive':
                 plt.plot(x, y, color='#1f77b4', label=class_name, alpha=0.5, linewidth=0.5) # 青
             elif class_name=='Negative':
@@ -424,26 +402,21 @@ def main():
     csv_files = [os.path.basename(file) for file in csv_files]
     # classes = ['Positive', 'Surprise', 'Negative', 'Neutral']
     classes = ['Negative', 'Neutral']
-    min = -3
-    max = 3
-    step_y = 1
+    min = 0
+    max = 100
+    step_x = 200
+    step_y = 10
     left = 0
     right = 3500    # 練習の動画(test2)
     # right = 12000    # 本番の動画(test4)
-    step_x = 200
-    softmax = True  # ソフトマックス関数（確率）に変換するか
     difference = True   # 確率の差で表示するか
-    if softmax:
-        min = 0
-        max = 100
-        step_y = 10
     if difference:
         min = -100
         max = 100
         step_y = 10
     for filename in csv_files:
         csv_file_path = f"{dir}/{filename}"
-        draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x, step_y, left, right, softmax, difference)
+        draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x, step_y, left, right, difference)
 
     '''
     csvファイルから開始行を指定してf_iを計算
