@@ -192,6 +192,23 @@ def record_fi_from_csv(csv_file_path, filename, start_frame):
 		# 必要な値を新しいcsvに記録
 		write_to_csv(output_csv_path, [images[index], emotion, p_i, n_i, f_i])
 
+def plot_graph(data_x_num, data_y, type):
+    x = []
+    y = data_y
+    for i in range(int(data_x_num)):
+        x.append(i)
+    
+    if type=='Positive':
+        plt.plot(x, y, color='#1f77b4', label=type, alpha=0.5, linewidth=0.5) # 青
+    elif type=='Negative':
+        plt.plot(x, y, color='#d62728', label=type, alpha=0.5, linewidth=0.5) # 赤
+    elif type=='Neutral':
+        plt.plot(x, y, color='#2ca02c', label=type, alpha=0.5, linewidth=0.5) # 緑
+    elif type=='Surprise':
+        plt.plot(x, y, color='#ff7f0e', label=type, alpha=0.5, linewidth=0.5) # オレンジ
+    else:
+        plt.plot(x, y, color='#1f77b4', linewidth=0.5) # 青
+
 def draw_graph_emotion_individual(csv_file_path, left, right, step_x):
     emotion_values = ["NaN", "Surprise", "Negative", "Neutral", "Positive"]	# y軸の順番を決めるためのダミーデータ
     with open(csv_file_path, 'r') as file:
@@ -253,28 +270,12 @@ def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x
             probability_1 = probabilities_all[0][i]
             probability_2 = probabilities_all[1][i]
             differences.append(probability_1 - probability_2)
-        x = []
-        y = differences
-        for i in range(int(row_num)):
-            x.append(i)
-        plt.plot(x, y, color='#1f77b4', linewidth=0.5) # 青
+        plot_graph(int(row_num), differences, "default")
         plt.axhspan(0, max, facecolor='#d62728', alpha=0.3)
         plt.axhspan(min, 0, facecolor='lightgreen', alpha=0.5)
     else:
         for i, class_name in enumerate(classes):
-            x = []
-            y = probabilities_all[i]
-            for j in range(int(row_num)):
-                x.append(j)
-            # グラフの描画
-            if class_name=='Positive':
-                plt.plot(x, y, color='#1f77b4', label=class_name, alpha=0.5, linewidth=0.5) # 青
-            elif class_name=='Negative':
-                plt.plot(x, y, color='#d62728', label=class_name, alpha=0.5, linewidth=0.5) # 赤
-            elif class_name=='Neutral':
-                plt.plot(x, y, color='#2ca02c', label=class_name, alpha=0.5, linewidth=0.5) # 緑
-            elif class_name=='Surprise':
-                plt.plot(x, y, color='#ff7f0e', label=class_name, alpha=0.5, linewidth=0.5) # オレンジ
+            plot_graph(int(row_num), probabilities_all[i], class_name)
 
     plt.title(f"{csv_file_path}")  # グラフのタイトル
     plt.xlabel('Frame')            # x軸のラベル
