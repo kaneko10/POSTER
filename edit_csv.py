@@ -296,11 +296,19 @@ def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x
 def noise_removal(data_list, classes, type):
     smoothed_data = []
     window_size = 3
-			
-    if type == "SMA":   # 単純異動平均
+
+    if type == "SMA" or type == "WMA" or type == "EMA":   # 移動平均
+        smoothed_data = moving_average(data_list, window_size, type)
+    else:
+        smoothed_data = data_list
+    return smoothed_data
+
+def moving_average(data_list, window_size, type):
+    smoothed_data = []
+    if type == "SMA":   # 単純移動平均
         for data in data_list:
             smoothed_data.append(np.convolve(data, np.ones(window_size)/window_size, mode='valid').tolist())
-    elif type == "WMA":     # 加重異動平均
+    elif type == "WMA":     # 加重移動平均
         weights = np.arange(1, window_size + 1)
         for data in data_list:
             wma = []
@@ -318,8 +326,6 @@ def noise_removal(data_list, classes, type):
                 ema_value = alpha * data[i] + (1 - alpha) * ema[-1]
                 ema.append(ema_value)
             smoothed_data.append(ema)
-    else:
-        smoothed_data = data_list
     return smoothed_data
 
 def draw_graph_from_csv(csv_file_path, filename, row_name, min, max, step, left, right):
