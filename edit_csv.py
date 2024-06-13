@@ -11,6 +11,7 @@ import seaborn as sns
 
 import torch
 import torch.nn.functional as F
+from scipy.linalg import svd
 
 def write_to_csv(csv_path, data):
     with open(csv_path, 'a', newline='') as csvfile:
@@ -192,11 +193,9 @@ def record_fi_from_csv(csv_file_path, filename, start_frame):
 		# 必要な値を新しいcsvに記録
 		write_to_csv(output_csv_path, [images[index], emotion, p_i, n_i, f_i])
 
-def plot_graph(data_x_num, data_y, type):
-    x = []
+def plot_graph(data_y, type):
+    x = range(len(data_y))
     y = data_y
-    for i in range(int(data_x_num)):
-        x.append(i)
     
     if type=='Positive':
         plt.plot(x, y, color='#1f77b4', label=type, alpha=0.5, linewidth=0.5) # 青
@@ -245,7 +244,7 @@ def draw_graph_emotion_individual(csv_file_path, left, right, step_x):
     # グラフを表示
     plt.show()
 
-def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x, step_y, left, right, difference):
+def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x, step_y, left, right, difference, type):
     plt.figure(figsize=(15, 5))
 	
     probabilities_all = []
@@ -270,12 +269,13 @@ def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x
             probability_1 = probabilities_all[0][i]
             probability_2 = probabilities_all[1][i]
             differences.append(probability_1 - probability_2)
-        plot_graph(int(row_num), differences, "default")
+        plot_graph(differences, "default")
         plt.axhspan(0, max, facecolor='#d62728', alpha=0.3)
         plt.axhspan(min, 0, facecolor='lightgreen', alpha=0.5)
     else:
+        conv_probabilities_all = noise_removal(probabilities_all, classes, type)
         for i, class_name in enumerate(classes):
-            plot_graph(int(row_num), probabilities_all[i], class_name)
+            plot_graph(conv_probabilities_all[i], class_name)
 
     plt.title(f"{csv_file_path}")  # グラフのタイトル
     plt.xlabel('Frame')            # x軸のラベル
@@ -292,6 +292,35 @@ def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x
 
     # グラフを表示
     plt.show()
+
+def noise_removal(data_list, classes, type):
+    smoothed_data = []
+    window_size = 3
+			
+    if type == "SMA":   # 単純異動平均
+        for data in data_list:
+            smoothed_data.append(np.convolve(data, np.ones(window_size)/window_size, mode='valid').tolist())
+    elif type == "WMA":     # 加重異動平均
+        weights = np.arange(1, window_size + 1)
+        for data in data_list:
+            wma = []
+            for i in range(len(data) - window_size + 1):
+                window = data[i:i + window_size]
+                weighted_avg = np.dot(window, weights) / weights.sum()
+                wma.append(weighted_avg)
+            smoothed_data.append(wma)
+    elif type == "EMA":     # 指数移動平均
+        for data in data_list:
+            ema = []
+            alpha = 2 / (window_size + 1)
+            ema.append(data[0])  # 初期値として最初のデータポイントを使用
+            for i in range(1, len(data)):
+                ema_value = alpha * data[i] + (1 - alpha) * ema[-1]
+                ema.append(ema_value)
+            smoothed_data.append(ema)
+    else:
+        smoothed_data = data_list
+    return smoothed_data
 
 def draw_graph_from_csv(csv_file_path, filename, row_name, min, max, step, left, right):
 	data = []
@@ -388,8 +417,8 @@ def main():
     dir = "csv/input"
     csv_files = glob.glob(os.path.join(dir, '*.csv'))
     csv_files = [os.path.basename(file) for file in csv_files]
-    # classes = ['Positive', 'Surprise', 'Negative', 'Neutral']
-    classes = ['Negative', 'Neutral']
+    classes = ['Positive', 'Surprise', 'Negative', 'Neutral']
+    # classes = ['Negative', 'Neutral']
     min = 0
     max = 100
     step_x = 200
@@ -397,14 +426,15 @@ def main():
     left = 0
     right = 3500    # 練習の動画(test2)
     # right = 12000    # 本番の動画(test4)
-    difference = True   # 確率の差で表示するか
+    difference = False   # 確率の差で表示するか
+    type = "SMA"
     if difference:
         min = -100
         max = 100
         step_y = 10
     for filename in csv_files:
         csv_file_path = f"{dir}/{filename}"
-        draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x, step_y, left, right, difference)
+        draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x, step_y, left, right, difference, type)
 
     '''
     csvファイルから開始行を指定してf_iを計算
