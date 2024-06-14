@@ -250,7 +250,7 @@ def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x
 	
     probabilities_all = []
     row_num = 0
-    for class_name in classes:
+    for _ in classes:
         probabilities_all.append([])
         
     with open(csv_file_path, 'r') as file:
@@ -267,9 +267,10 @@ def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x
     if difference:
         differences = []
         for i in range(int(row_num)):
-            probability_1 = probabilities_all[0][i]
-            probability_2 = probabilities_all[1][i]
-            differences.append(probability_1 - probability_2)
+            probability = []
+            for index in difference:
+                probability.append(probabilities_all[index][i])
+            differences.append(probability[0] - probability[1])
         plot_graph(differences, "default")
         plt.axhspan(0, max, facecolor='#d62728', alpha=0.3)
         plt.axhspan(min, 0, facecolor='lightgreen', alpha=0.5)
@@ -471,7 +472,6 @@ def main():
     csv_files = glob.glob(os.path.join(dir, '*.csv'))
     csv_files = [os.path.basename(file) for file in csv_files]
     classes = ['Positive', 'Surprise', 'Negative', 'Neutral']
-    # classes = ['Negative', 'Neutral']
     min = 0
     max = 100
     step_x = 200
@@ -479,7 +479,8 @@ def main():
     left = 0
     right = 3500    # 練習の動画(test2)
     # right = 12000    # 本番の動画(test4)
-    difference = False   # 確率の差で表示するか
+    difference = [2, 3]   # 確率の差で表示するか
+    # difference = []
     type = "WMA"
     if difference:
         min = -100
