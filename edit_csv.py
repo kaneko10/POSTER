@@ -11,7 +11,8 @@ import seaborn as sns
 
 import torch
 import torch.nn.functional as F
-from scipy.linalg import svd
+# from scipy.linalg import svd
+from pyts.decomposition import SingularSpectrumAnalysis
 
 def write_to_csv(csv_path, data):
     with open(csv_path, 'a', newline='') as csvfile:
@@ -295,10 +296,12 @@ def draw_graph_emotion_logit_individual(csv_file_path, classes, min, max, step_x
 
 def noise_removal(data_list, classes, type):
     smoothed_data = []
-    window_size = 3
+    window_size = 30
 
     if type == "SMA" or type == "WMA" or type == "EMA":   # 移動平均
         smoothed_data = moving_average(data_list, window_size, type)
+    elif type == "SSA":   # Singular Spectrum Analysis (SSA)
+        smoothed_data = ssa(data_list, window_size)
     else:
         smoothed_data = data_list
     return smoothed_data
@@ -326,6 +329,50 @@ def moving_average(data_list, window_size, type):
                 ema_value = alpha * data[i] + (1 - alpha) * ema[-1]
                 ema.append(ema_value)
             smoothed_data.append(ema)
+    return smoothed_data
+
+def ssa(data_list, window_size):
+    smoothed_data = []
+
+    for data in data_list:
+        data = np.array(data)  # リストをNumpy配列に変換
+		# SSAの適用
+        ssa = SingularSpectrumAnalysis(window_size=window_size)
+        X_ssa = ssa.fit_transform(data.reshape(1, -1))
+
+        # トレンドと周期成分の再構築
+        reconstructed = X_ssa[0, 0] + X_ssa[0, 1]
+		
+        smoothed_data.append(reconstructed)
+        # n = len(data)
+        # if not isinstance(data, list):
+        #     raise ValueError("Input data should be a list")
+        # if not all(isinstance(x, (int, float)) for x in data):
+        #     raise ValueError("All elements in data should be integers or floats")
+        # if window_size > n:
+        #     raise ValueError("Window size must be less than or equal to the length of the data")
+        
+        # # Step 1: Embedding
+        # K = n - window_size + 1
+        # trajectory_matrix = np.column_stack([data[i:i+window_size] for i in range(K)])
+        
+        # # Step 2: Singular Value Decomposition (SVD)
+        # U, Sigma, VT = svd(trajectory_matrix)
+        
+        # # Step 3: Reconstruct the trajectory matrix with a reduced rank
+        # rank = 1  # You can adjust the rank based on the singular values
+        # d = np.diag(Sigma[:rank])
+        # reconstructed_trajectory_matrix = U[:, :rank] @ d @ VT[:rank, :]
+        
+        # # Averaging over the anti-diagonals to reconstruct the time series
+        # reconstructed_data = np.zeros(n)
+        # counts = np.zeros(n)
+        # for i in range(K):
+        #     reconstructed_data[i:i+window_size] += reconstructed_trajectory_matrix[:, i]
+        #     counts[i:i+window_size] += 1
+        # reconstructed_data /= counts
+        # smoothed_data.append(reconstructed_data)
+
     return smoothed_data
 
 def draw_graph_from_csv(csv_file_path, filename, row_name, min, max, step, left, right):
@@ -433,7 +480,7 @@ def main():
     right = 3500    # 練習の動画(test2)
     # right = 12000    # 本番の動画(test4)
     difference = False   # 確率の差で表示するか
-    type = "SMA"
+    type = "WMA"
     if difference:
         min = -100
         max = 100
