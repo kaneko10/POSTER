@@ -479,7 +479,7 @@ def main():
     left = 0
     right = 3500    # 練習の動画(test2)
     # right = 12000    # 本番の動画(test4)
-    difference = [2, 3]   # 確率の差で表示するか
+    difference = [2, 3]   # 確率の差で表示するか    ['Negative', 'Neutral']の方が良さそう
     # difference = []
     type = "WMA"
     if difference:
